@@ -26,6 +26,8 @@ SECRET_KEY = 'django-insecure-ea2%(r11=y-652#0nyp38svq7)%xy2j#chk(z3m8yw@9s69*ch
 DEBUG = True
 
 ALLOWED_HOSTS = []
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+AUTH_USER_MODEL  = 'accounts.User'
 
 
 # Application definition
@@ -39,8 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-
-    'token_auth',
+    'accounts',
+    
+    
 
     'django.contrib.sites',
 
@@ -143,11 +146,11 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    
 }
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
@@ -162,3 +165,11 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'tokenauth38@gmail.com'
+EMAIL_HOST_PASSWORD = 'cqdffwoqogdhafju'
