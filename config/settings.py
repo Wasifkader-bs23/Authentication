@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
     'rest_auth',
     'rest_auth.registration',
+    
 
     
     'rest_framework.authtoken',
@@ -168,7 +169,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'in-v3.mailjet.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'tokenauth38@gmail.com'
