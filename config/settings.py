@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     
-    
+    'rest_framework_simplejwt',
 
     'django.contrib.sites',
 

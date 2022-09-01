@@ -8,129 +8,42 @@ from rest_framework.decorators import api_view
 # Create your views here.
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed
+import jwt, datetime
 
-
-@api_view(['POST'])
-def login_api(request):
-    try:
-        data= request.data
-        email=data.get('email')
-        password=data.get('password')
-        user = authenticate(email=email,password=password)
-        if user:
-            token = Token.objects.get_or_create(user=user)
-            return Response({
-                'status': 200,
-                'token':str(Token)
-            })
-        return Response({
-            'status':300,
-            'message':'invaild credentials',
-        })
-    except Exception as e:
-            print(e)
-    return Response({
-            'status':400,
-            'message':'went wrong',
-        })
 
 class Login(APIView):
+
     def post(self, request):
-        try:
-            data=request.data
-            serializer = VerifyAccountSerializer(data=data)
+        email = request.data['email']
+        password = request.data['password']
 
-            if serializer.is_valid():
-                        email=serializer.data['email']
-                        otp=serializer.data['otp']
+        user = User.objects.filter(email=email).first()
 
-                        user= User.objects.filter(email=email)
-                        
-                        if not user.exists():
-                            return Response({
-                            'status':400,
-                            'message' :'something went wrong',
-                            'data':'invaild email'
-                        })
+        if user is None:
+            raise AuthenticationFailed('User not found!')
 
-                        if user[0].otp!=otp:
-                            return Response({
-                                'status':400,
-                                'message':'something went wrong',
-                                'data':'wrong otp'
-                            })
-                        
-                        user[0].is_verified=True
-                        user[0].save()
+        if not user.check_password(password):
+            raise AuthenticationFailed('Incorrect password!')
 
+        payload = {
+            'id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat': datetime.datetime.utcnow()
+        }
 
+        token = jwt.encode(payload, 'secret', algorithm='HS256').decode('utf-8')
 
-                        
-                        return Response ({
-                            'status': 200,
-                            'message' :'account verified',
-                            'data': {},
-                        })
+        response = Response()
 
-                    
-            return Response({
-                            'status':400,
-                            'message' :'something went wrong',
-                            'data':serializer.errors
-                        })
-
-
-        except Exception as e:
-            print(e)
-    # def post(self, request):
-    #     try:
-    #         data=request.data
-    #         serializer = LoginSerializer(data=data)
-    #         email=data.get('email')
-    #         password=data.get('password')
-    #         user = authenticate(email=email,password=password)
-            
-    #         if serializer.is_valid():
-    #                     token = Token.objects.get_or_create(user=user)
-    #                     email=serializer.data['email']
-    #                     password=serializer.data['password']
-
-    #                     user= User.objects.filter(email=email)
-    #                     if not user.exists():
-    #                         return Response({
-    #                         'status':400,
-    #                         'message' :'something went wrong',
-    #                         'data':'invaild email'
-    #                     })
-
-    #                     if user[0].password!=password:
-    #                         return Response({
-    #                             'status':400,
-    #                             'message':'something went wrong',
-    #                             'data':'wrong otp'
-    #                         })
-                        
-                         
-    #                     return Response({
-    #                         'status': 200,
-    #                         'token':str(Token)
-    #                     })
-
-
-
-                        
-                        
-
-                    
-    #         return Response({
-    #                         'status':400,
-    #                         'message' :'something went wrong',
-    #                         'data':serializer.errors
-    #                     })
-
-
-    #     except Exception as e:
-    #         print(e)
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {
+            'jwt': token
+        }
+        return response
+  
 
 
 class RegisterAPI(APIView):
