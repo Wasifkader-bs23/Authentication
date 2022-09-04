@@ -5,6 +5,9 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields=['email','password','is_verified']
+        extra_kwargs = {
+            'is_verified': {'write_only': True}
+        }
     
     def create(self, validated_data):
         password = validated_data.pop('password', None)
@@ -25,3 +28,9 @@ class LoginSerializer(serializers.Serializer):
     class Meta:
         model = User
         fields = ['email' , 'password']
+
+class UserViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=['first_name', 'last_name','email']
+        

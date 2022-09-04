@@ -118,4 +118,47 @@ class VerifyOTP(APIView):
 
         except Exception as e:
             print(e)
+
+class UserView(APIView):
+
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithm=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
+        serializer = UserViewSerializer(user)
+        return Response(serializer.data)
+
+    def patch(self, request,*args,**kwargs):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithm=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        
+
+        user = User.objects.filter(id=payload['id']).first()
+        data = request.data
+        serializer = UserViewSerializer(user,data=request.data, partial=True)
+        if serializer.is_valid():
+                serializer.save()
+
+        
+
+
+        return Response(serializer.data)
+    
+    
         
