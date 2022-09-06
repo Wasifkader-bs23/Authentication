@@ -159,6 +159,27 @@ class UserView(APIView):
 
 
         return Response(serializer.data)
+
+class ResetPassword(APIView):
     
+    
+    def post(self, request):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithm=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
+        serializer = ResetPasswordSerializer(user)
+        send_otp_via_email(serializer.data['email'])
+        return Response({
+                            'message' :'Password reset code sent to email address',
+                            
+                        })
     
         
