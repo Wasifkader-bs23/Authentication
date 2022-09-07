@@ -36,4 +36,28 @@ class UserViewSerializer(serializers.ModelSerializer):
 
 class ResetPasswordSerializer(serializers.Serializer):
     email=serializers.EmailField()
+
+class PasswordResetSerializer(serializers.Serializer):
+    email=serializers.EmailField()
+    password = serializers.CharField(required=True)
+    otp = serializers.CharField()
+    class Meta:
+        model = User
+        fields = ['email' , 'password','otp']
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        
+        instance.password = validated_data.get('password', instance.password)
+        password=instance.password
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
         

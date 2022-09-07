@@ -1,3 +1,4 @@
+from functools import partial
 from django.shortcuts import render
 from accounts.emails import send_otp_via_email
 from rest_framework.views import APIView
@@ -118,6 +119,89 @@ class VerifyOTP(APIView):
 
         except Exception as e:
             print(e)
+
+
+class PasswordReset(APIView):
+    # def post(self, request):
+    #     try:
+    #         data=request.data
+    #         serializer = PasswordResetSerializer(data=data)
+
+    #         if serializer.is_valid():
+    #                     email = data.get('email')
+    #                     otp = data.get('otp')
+    #                     print(email)
+
+    #                     user= User.objects.filter(email=email)
+    #                     if not user.exists():
+    #                         return Response({
+    #                         'status':400,
+    #                         'message' :'something went wrong',
+    #                         'data':'invaild email'
+    #                     })
+
+    #                     if user[0].otp!=otp:
+    #                         return Response({
+    #                             'status':400,
+    #                             'message':'something went wrong',
+    #                             'data':'wrong otp'
+    #                         })
+                        
+                        
+                        
+    #                     if serializer.is_valid():
+    #                             serializer.save()
+
+                        
+    #                     return Response ({
+    #                         'status': 200,
+    #                         'message' :'password changed successfully',
+    #                         'data': {},
+    #                     })
+
+                    
+    #         return Response({
+    #                         'status':400,
+    #                         'message' :'something went wrong',
+    #                         'data':serializer.errors
+    #                     })
+
+
+    #     except Exception as e:
+    #         print(e)
+
+    
+    def post(self, request,*args,**kwargs):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithm=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        
+
+        user = User.objects.filter(id=payload['id']).first()
+        data = request.data
+        otp=data.get('otp')
+        print(otp)
+        serializer = PasswordResetSerializer(user,data=request.data, partial=True)
+        if serializer.is_valid() and otp==user.otp:
+                serializer.save()
+
+                return Response ({
+                            'message' :'password changed successfully',
+                            
+                        })
+        else :
+            return Response ({
+                            'message' :'wrong otp',
+                            
+                        })
+
 
 class UserView(APIView):
 
