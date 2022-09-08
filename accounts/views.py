@@ -13,11 +13,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 import jwt, datetime
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticatedOrReadOnly, BasePermission, IsAdminUser, DjangoModelPermissions, AllowAny
+import json
+from django.http import JsonResponse
+from django.forms.models import model_to_dict
+from django.http import HttpResponse
 
 
 class Login(APIView):
 
     def post(self, request):
+        permission_classes = [AllowAny]
         email = request.data['email']
         password = request.data['password']
 
@@ -96,9 +102,9 @@ class VerifyOTP(APIView):
                                 'message':'something went wrong',
                                 'data':'wrong otp'
                             })
-                        
-                        user[0].is_verified=True
-                        user[0].save()
+                        user=user.first()
+                        user.is_verified = True
+                        user.save()
 
 
 
@@ -106,7 +112,7 @@ class VerifyOTP(APIView):
                         return Response ({
                             'status': 200,
                             'message' :'account verified',
-                            'data': {},
+                            'data': 'successful'
                         })
 
                     
@@ -198,7 +204,7 @@ class PasswordReset(APIView):
                         })
         else :
             return Response ({
-                            'message' :'wrong otp',
+                            'message' :'wrong otp,,',
                             
                         })
 
@@ -206,6 +212,7 @@ class PasswordReset(APIView):
 class UserView(APIView):
 
     def get(self, request):
+        # permission_classes = [DjangoModelPermissions]
         token = request.COOKIES.get('jwt')
 
         if not token:
@@ -218,6 +225,8 @@ class UserView(APIView):
 
         user = User.objects.filter(id=payload['id']).first()
         serializer = UserViewSerializer(user)
+        email=serializer.data.get('email')
+        print(email)
         return Response(serializer.data)
 
     def patch(self, request,*args,**kwargs):
@@ -265,5 +274,35 @@ class ResetPassword(APIView):
                             'message' :'Password reset code sent to email address',
                             
                         })
+
+class AdminUserView(APIView):
+
+    def get(self, request):
+        permission_classes = [IsAdminUser]
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithm=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
+        ser = UserViewSerializer(user)
+        email=ser.data.get('email')
+        if(email=='wasifkader@iut-dhaka.edu'):
+
+            users=User.objects.all()
+            serializer = UserViewSerializer(users,many=True)
+            return Response(serializer.data)
+        
+        else:
+            return Response({
+                            'message' :'Not admin user',
+                            
+                        })
+
     
         
